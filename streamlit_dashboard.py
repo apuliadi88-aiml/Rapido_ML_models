@@ -16,13 +16,11 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Pickup/Drop Heatmap",
     "Cancellations by Hour",
     "Surge Patterns",
-    "Customer vs Driver Cancellations",
-    "Cancellation rate by City and weekday"
+    "Cancellation rate by City and weekday",
+    "Customer vs Driver Scores by City"
 ])
 
-# ----------------------
 # Tab 1: Pickup/Drop Heatmap
-# ----------------------
 with tab1:
     st.header("Pickup/Drop City Heatmap")
     
@@ -39,9 +37,8 @@ with tab1:
     plt.title('Number of Rides: Pickup vs Drop Location')
     st.pyplot(plt)
 
-# ----------------------
+
 # Tab 2: Cancellations by Hour
-# ----------------------
 with tab2:
     st.header("Cancellations by Hour")
     
@@ -52,9 +49,8 @@ with tab2:
                  title='Cancellations by Hour')
     st.plotly_chart(fig)
 
-# ----------------------
+
 # Tab 3: Surge Patterns
-# ----------------------
 with tab3:
     st.header("Surge Multiplier Patterns")
     
@@ -66,10 +62,20 @@ with tab3:
                  title='Surge Multiplier by City')
     st.plotly_chart(fig)
 
-# ----------------------
-# Tab 4: Customer Loyalty vs Driver Reliability score by City
-# ----------------------
+# Tab 4: Number of Cancellations by City and weekday heatmap
 with tab4:
+    st.header("Number of Cancellations by City and Weekday")
+    
+    cancel_city_weekday = df.groupby(['city', 'day_of_week'])['booking_status'].apply(lambda x: (x=='Cancelled').sum()).reset_index(name='cancellation_count')
+    
+    pivot_cancel = cancel_city_weekday.pivot(index='city', columns='day_of_week', values='cancellation_count')
+    plt.figure(figsize=(12,8))
+    sns.heatmap(pivot_cancel, annot=True, fmt='d', cmap='Reds')
+    plt.title('Number of Cancellations by City and Weekday')
+    st.pyplot(plt)
+
+# Tab 5: Customer Loyalty vs Driver Reliability score by City
+with tab5:
     st.header("Driver Reliability & Customer Loyalty by City")
     
     # Aggregate by city
@@ -77,6 +83,12 @@ with tab4:
         'driver_reliability_score':'mean',
         'customer_loyalty_score':'mean'
     }).reset_index()
+
+    # Scatter plot
+    fig3 = px.scatter(city_scores, x='driver_reliability_score', y='customer_loyalty_score',
+                      text='city', size='customer_loyalty_score', color='city',
+                      title='Customer Loyalty vs Driver Reliability by City')
+    st.plotly_chart(fig3)
     
     # Bar chart for Driver Reliability Score
     fig1 = px.bar(city_scores, x='city', y='driver_reliability_score',
@@ -90,22 +102,6 @@ with tab4:
                   labels={'customer_loyalty_score':'Customer Loyalty Score', 'city':'City'})
     st.plotly_chart(fig2)
     
-    # Optional: Combined scatter plot
-    fig3 = px.scatter(city_scores, x='driver_reliability_score', y='customer_loyalty_score',
-                      text='city', size='customer_loyalty_score', color='city',
-                      title='Customer Loyalty vs Driver Reliability by City')
-    st.plotly_chart(fig3)
+   
 
-# ----------------------
-# Tab 5: Number of Cancellations by City and weekday heatmap
-# ----------------------
-with tab5:
-    st.header("Number of Cancellations by City and Weekday")
-    
-    cancel_city_weekday = df.groupby(['city', 'day_of_week'])['booking_status'].apply(lambda x: (x=='Cancelled').sum()).reset_index(name='cancellation_count')
-    
-    pivot_cancel = cancel_city_weekday.pivot(index='city', columns='day_of_week', values='cancellation_count')
-    plt.figure(figsize=(12,8))
-    sns.heatmap(pivot_cancel, annot=True, fmt='d', cmap='Reds')
-    plt.title('Number of Cancellations by City and Weekday')
-    st.pyplot(plt)
+
